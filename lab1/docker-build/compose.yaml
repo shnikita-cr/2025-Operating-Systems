@@ -7,7 +7,8 @@ services:
       context: ..
       dockerfile: docker-build/Dockerfile
     environment:
-      - BUILD_DIR=${BUILD_DIR}
-      - TARGET=${TARGET}
-    env_file:
-      - ../.env
+      - RUN_FOREGROUND=1
+      - INTERVAL_SEC=5
+    volumes:
+      - ../config.txt:/app/run/config.txt:ro
+    working_dir: /app
