@@ -4,20 +4,28 @@ project(lab1 CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(lab1 src/main.cpp src/Daemon.h src/Daemon.cpp)
-
-# Set warning flags - these will be used by CMake automatically
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-
-# Set build type to Release if not specified
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
-
-# Set output directory
-set_target_properties(${PROJECT_NAME} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+add_executable(lab1
+        src/main.cpp
+        src/daemon/daemon.cpp
+        src/daemon/daemon.hpp
+        src/config/config.cpp
+        src/config/config.hpp
+        src/logger/logger.cpp
+        src/logger/logger.hpp
+        src/util/util.cpp
+        src/util/util.hpp
         )
 
-# Install target (optional)
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+# Warnings
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(lab1 PRIVATE -Wall -Werror)
+endif()
+
+# pthread (std::thread)
+find_package(Threads REQUIRED)
+target_link_libraries(lab1 PRIVATE Threads::Threads)
+
+# Output dir
+set_target_properties(lab1 PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        )
