@@ -1,0 +1,7 @@
+name: OS-lab1
+
+services:
+  lab1-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
