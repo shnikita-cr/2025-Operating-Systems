@@ -7,44 +7,42 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_compile_options(-O2 -pipe -pthread -Wall -Werror)
 
-# Общие исходники
-set(SRC_COMMON
-        src/common.cpp
-        src/conn_mq.cpp
-        src/conn_fifo.cpp
-        src/conn_sock.cpp
-        )
+# Common sources (all *.cpp except host/client and conn_*.cpp).
+file(GLOB SRC_ALL "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+set(HOST_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/host.cpp")
+set(CLIENT_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/client.cpp")
+file(GLOB CONN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/conn_*.cpp")
 
-add_library(core_objs STATIC ${SRC_COMMON})
-target_include_directories(core_objs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-# Для mq в glibc иногда нужен -lrt
+set(COMMON_SOURCES ${SRC_ALL})
+list(REMOVE_ITEM COMMON_SOURCES ${HOST_SRC} ${CLIENT_SRC})
+foreach(f ${CONN_SOURCES})
+  list(REMOVE_ITEM COMMON_SOURCES ${f})
+endforeach()
+
 find_library(LRT rt)
-if(LRT)
-    target_link_libraries(core_objs PUBLIC ${LRT})
-endif()
-target_link_libraries(core_objs PUBLIC pthread)
 
-# Хост и клиент (один код с разными флагами трансп./линковкой)
-add_executable(host_mq src/host.cpp)
-target_link_libraries(host_mq PRIVATE core_objs)
-target_compile_definitions(host_mq PRIVATE TRANSPORT_MQ)
+# For each transport implementation src/conn_<type>.cpp generate:
+#   - static lib core_<type>
+#   - host_<type>
+#   - client_<type>
+foreach(conn_file ${CONN_SOURCES})
+  get_filename_component(conn_we "${conn_file}" NAME_WE)   # conn_mq
+  string(REPLACE "conn_" "" type_code "${conn_we}")      # mq
+  string(TOUPPER "${type_code}" TYPE_UPPER)
 
-add_executable(client_mq src/client.cpp)
-target_link_libraries(client_mq PRIVATE core_objs)
-target_compile_definitions(client_mq PRIVATE TRANSPORT_MQ)
+  set(core_lib "core_${type_code}")
+  add_library(${core_lib} STATIC ${COMMON_SOURCES} ${conn_file})
+  target_include_directories(${core_lib} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+  target_link_libraries(${core_lib} PUBLIC pthread)
+  if(LRT)
+    target_link_libraries(${core_lib} PUBLIC ${LRT})
+  endif()
 
-add_executable(host_fifo src/host.cpp)
-target_link_libraries(host_fifo PRIVATE core_objs)
-target_compile_definitions(host_fifo PRIVATE TRANSPORT_FIFO)
+  add_executable(host_${type_code} "${HOST_SRC}")
+  target_link_libraries(host_${type_code} PRIVATE ${core_lib})
+  target_compile_definitions(host_${type_code} PRIVATE "TRANSPORT_${TYPE_UPPER}")
 
-add_executable(client_fifo src/client.cpp)
-target_link_libraries(client_fifo PRIVATE core_objs)
-target_compile_definitions(client_fifo PRIVATE TRANSPORT_FIFO)
-
-add_executable(host_sock src/host.cpp)
-target_link_libraries(host_sock PRIVATE core_objs)
-target_compile_definitions(host_sock PRIVATE TRANSPORT_SOCK)
-
-add_executable(client_sock src/client.cpp)
-target_link_libraries(client_sock PRIVATE core_objs)
-target_compile_definitions(client_sock PRIVATE TRANSPORT_SOCK)
+  add_executable(client_${type_code} "${CLIENT_SRC}")
+  target_link_libraries(client_${type_code} PRIVATE ${core_lib})
+  target_compile_definitions(client_${type_code} PRIVATE "TRANSPORT_${TYPE_UPPER}")
+endforeach()
