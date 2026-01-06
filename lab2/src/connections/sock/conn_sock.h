@@ -1,5 +1,5 @@
-#include "conn_iface.h"
-#include "common.h"
+#include "connections/base/conn_iface.h"
+#include "common/common.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>

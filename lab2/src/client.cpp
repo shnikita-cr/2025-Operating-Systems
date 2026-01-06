@@ -1,5 +1,5 @@
-#include "common.h"
-#include "conn_iface.h"
+#include "common/common.h"
+#include "connections/base/conn_iface.h"
 
 #include <memory>
 #include <pthread.h>

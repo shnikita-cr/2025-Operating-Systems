@@ -1,5 +1,5 @@
-#include "conn_iface.h"
-#include "common.h"
+#include "connections/base/conn_iface.h"
+#include "common/common.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
