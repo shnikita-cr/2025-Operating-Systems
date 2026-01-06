@@ -1,0 +1,1 @@
+docker build -t os-lab2 -f docker-build/Dockerfile .
