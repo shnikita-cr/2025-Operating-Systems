@@ -1,0 +1,14 @@
+name: OS-lab1
+
+services:
+  app:
+    container_name: app
+    build:
+      context: ..
+      dockerfile: docker-build/Dockerfile
+    environment:
+      - RUN_FOREGROUND=1
+      - INTERVAL_SEC=5
+    volumes:
+      - ../config.txt:/app/run/config.txt:ro
+    working_dir: /app
